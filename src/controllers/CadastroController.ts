@@ -1,40 +1,55 @@
 import { Request, Response} from 'express'
-import knex from '../database/connection'
+import { getCustomRepository } from 'typeorm'
+
+import { CadastroRepository } from '../repositores/Cadastrorepository'
 
 export default {
   async create(req: Request, res: Response) {
-    const { nome, cpf} = req.body
-    const data = { cpf, nome }
-    await knex('table_cadastro').insert(data)
+    const { nome, cpf_cnpj} = req.body
+
+    const repository = getCustomRepository(CadastroRepository)
+
+    let data = { cpf_cnpj, nome }
+
+    data = await repository.save(data)
+
     return res.status(201).json({data:data})
   },
 
   async list(req: Request, res: Response) {
-    var result = await knex('table_cadastro').orderBy('nome')
-    return res.status(200).json({data:result})
+    const repository = getCustomRepository(CadastroRepository)
+
+    const data = await repository.find()
+    return res.status(200).json({data:data})
   },
 
   async find(req: Request, res: Response) {
-    const { id } =req.params
-    const user = await knex('table_cadastro').where({ id })
-    return res.status(200).json(user)
+    const { id } = req.params
+    const repository = getCustomRepository(CadastroRepository)
+
+    const cadastro = await repository.findOne(id)
+    
+    return res.status(200).json(cadastro)
   },
 
   async update(req: Request, res: Response) {
     const { id } = req.params
-    const { nome, cpf} = req.body
+    const { nome, cpf_cnpj} = req.body
 
-    const data = { cpf, nome }
+    const data = { cpf_cnpj, nome }
 
-    await knex('table_cadastro').update(data).where({ id })
+    const repository = getCustomRepository(CadastroRepository)
 
-    const cadastro = await knex('table_cadastro').where({ id })
+    await repository.update(id, data)
 
-    return res.status(200).json({data:cadastro})
+    return res.status(200).json({data:"cadastro atualizado com sucesso!"})
   },
   async delete(req: Request, res: Response) {
     const { id } = req.params
-    await knex('table_cadastro').del().where({ id })
+    const repository = getCustomRepository(CadastroRepository)
+
+    await repository.delete(id)
+
     return res.status(200).json({ message: 'Registro excluido com sucesso'})
   }
 }
